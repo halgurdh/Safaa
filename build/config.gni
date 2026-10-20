@@ -189,10 +189,9 @@ is_release_channel = brave_channel == ""
 
 brave_android_output = ""
 if (is_android) {
-  brave_android_output += "$root_out_dir/apks/Safaa-"
   if (target_android_output_format == "aab") {
-    brave_android_output += "$target_cpu.aab"
+    brave_android_output += "$root_out_dir/apks/Safaa.aab"
   } else {
-    brave_android_output += "$target_cpu.apk"
+    brave_android_output += "$root_out_dir/apks/Safaa-$target_cpu.apk"
   }
 }
