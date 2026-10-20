@@ -2,7 +2,9 @@
   <img src="safaa_logo.svg" width="96" alt="Safaa Browser Logo" />
 </p>
 
-# Safaa Browser (صفاء)
+# Safaa Browser
+
+**Website:** [safaabrowser.com](https://safaabrowser.com)
 
 **Safaa** (`com.safaa.browser`) is a privacy-focused, Muslim Android web browser built on Chromium and Brave Core, featuring built-in real-time background music removal ([**NoMusic**](https://github.com/mohamedsadiqaguenaou/NoMusic)), full built-in ad & tracker blocking (**Shields**), and always-on pornography & adult content blocking.
 

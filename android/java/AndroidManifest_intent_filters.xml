@@ -16,5 +16,5 @@
     <category android:name="android.intent.category.DEFAULT" />
     <category android:name="android.intent.category.BROWSABLE" />
     <data android:scheme="https"
-          android:host="brave.com" />
+          android:host="safaabrowser.com" />
 </intent-filter>

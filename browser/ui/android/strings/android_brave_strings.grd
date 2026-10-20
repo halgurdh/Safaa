@@ -831,13 +831,13 @@ This file contains all "about" strings.  It is set to NOT be translated, in tran
         Could not join this sync chain. The sync chain was deleted.
       </message>
       <message name="IDS_BRAVE_PRIVACY_NOTICE_URL" desc="URL for the Brave privacy notice" translateable="false">
-        https://brave.com/privacy_android
+        https://safaabrowser.com/privacy
       </message>
       <message name="IDS_BRAVE_TERMS_OF_SERVICE_URL" desc="URL for Brave Terms of Service" translateable="false">
-        https://brave.com/terms_of_use
+        https://safaabrowser.com/terms
       </message>
       <message name="IDS_BRAVE_LICENSE_TEXT" desc="Title for Brave License">
-        Brave License
+        Safaa License
       </message>
       <message name="IDS_BRAVE_NEW_PRIVATE_TAB" desc="Text for 'New private tab'">
         New private tab

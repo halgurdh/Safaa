@@ -34,7 +34,7 @@ inline constexpr char kWidevineLearnMoreUrl[] =
     "https://support.brave.app/hc/en-us/articles/"
     "360023851591-How-do-I-view-DRM-protected-content-";
 
-inline constexpr char kDownloadBraveUrl[] = "https://www.brave.com/download";
+inline constexpr char kDownloadBraveUrl[] = "https://safaabrowser.com";
 inline constexpr char kAIChatAboutUrl[] = "https://brave.com/leo/";
 
 #endif  // BRAVE_COMPONENTS_CONSTANTS_URL_CONSTANTS_H_
