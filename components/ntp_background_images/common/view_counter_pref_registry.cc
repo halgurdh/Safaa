@@ -56,7 +56,9 @@ void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
 void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry) {
   registry->RegisterBooleanPref(prefs::kNewTabTakeoverNotificationDismissed,
                                 false);
-  registry->RegisterBooleanPref(prefs::kNewTabPageShowBackgroundImage, true);
+  // Safaa: background images are off by default (users can still opt in from
+  // Settings > Appearance > New Tab Page > Show background images).
+  registry->RegisterBooleanPref(prefs::kNewTabPageShowBackgroundImage, false);
   registry->RegisterIntegerPref(
       prefs::kNewTabTakeoverInfobarRemainingDisplayCount,
       kNewTabTakeoverInfobarRemainingDisplayCountThreshold);
