@@ -46,6 +46,12 @@ constexpr char kObsoleteNewTabPageShowSponsoredSites[] =
 constexpr char kObsoleteNewTabPageSponsoredImagesSurveyPanelist[] =
     "brave.new_tab_page.sponsored_images.survey_panelist";
 
+// Added 10/2026.
+// Set once a value saved while background images were on by default has been
+// cleared, so the reset happens only once per profile.
+constexpr char kSafaaBackgroundImagesOffMigrated[] =
+    "safaa.new_tab_page.background_images_off_migrated";
+
 }  // namespace
 
 void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
@@ -59,6 +65,7 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry) {
   // Safaa: background images are off by default (users can still opt in from
   // Settings > Appearance > New Tab Page > Show background images).
   registry->RegisterBooleanPref(prefs::kNewTabPageShowBackgroundImage, false);
+  registry->RegisterBooleanPref(kSafaaBackgroundImagesOffMigrated, false);
   registry->RegisterIntegerPref(
       prefs::kNewTabTakeoverInfobarRemainingDisplayCount,
       kNewTabTakeoverInfobarRemainingDisplayCountThreshold);
@@ -110,6 +117,16 @@ void MigrateObsoleteProfilePrefs(PrefService* prefs) {
 
   // Added 09/2026.
   prefs->ClearPref(kObsoleteNewTabPageSponsoredImagesSurveyPanelist);
+
+  // Added 10/2026.
+  // Safaa: background images used to be on by default, and a value saved under
+  // that default keeps them on after the default changed. Clear it once so
+  // every install starts with them off; a choice made in Settings afterwards
+  // is kept.
+  if (!prefs->GetBoolean(kSafaaBackgroundImagesOffMigrated)) {
+    prefs->ClearPref(prefs::kNewTabPageShowBackgroundImage);
+    prefs->SetBoolean(kSafaaBackgroundImagesOffMigrated, true);
+  }
 }
 
 }  // namespace ntp_background_images
