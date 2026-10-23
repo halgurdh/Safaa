@@ -17,11 +17,18 @@ def remap_build_number(build_number):
     return build_number
 
 
+# Minor version (build_number) of Safaa's first Google Play release.
+_FIRST_PLAY_MINOR = 100
+
+
 def generate_base_version_code(build_number, patch_number):
-    # Version codes are laid out as PP_BB_PPP_CD where PP is a 2-digit
-    # prefix, BB are the lower 2 digits of build_number, PPP is
-    # patch_number, and CD is the package/ABI suffix. The prefix grows
-    # past 42 once build_number exceeds 99 so that codes stay strictly
-    # increasing without overflowing Android's int32 versionCode.
-    prefix = 42 + build_number // 100
-    return int('%02d%02d%03d00' % (prefix, build_number % 100, patch_number))
+    # Version codes are laid out as M_PPP_CD where M counts minor versions
+    # (build_number) from _FIRST_PLAY_MINOR, PPP is patch_number, and CD is
+    # the package/ABI suffix, e.g. 1.100.5 on arm64 is 100504. Brave's 42/43
+    # prefix started Safaa at 430000004, which Google Play rejects as a jump
+    # that would exhaust the 2100000000 versionCode limit; small codes leave
+    # room for every future release.
+    assert build_number >= _FIRST_PLAY_MINOR, (
+        'Safaa version codes start at 1.%d.0' % _FIRST_PLAY_MINOR)
+    assert patch_number < 1000, 'patch number must fit in 3 digits'
+    return ((build_number - _FIRST_PLAY_MINOR + 1) * 1000 + patch_number) * 100

@@ -188,9 +188,12 @@ export class Config {
     this.targetArch = envConfig.getString(['target_arch'], process.arch)
     this.targetEnvironment = envConfig.getString(['target_environment'])
     this.gypTargetArch = 'x64'
+    // Safaa: keep the patch number by default. It is part of the Android
+    // versionName and versionCode, and Google Play needs a new versionCode
+    // for every upload, so each release bumps it in package.json.
     this.ignorePatchVersionNumber =
       !this.isBraveReleaseBuild()
-      && envConfig.getBoolean(['ignore_patch_version_number'], !isCI)
+      && envConfig.getBoolean(['ignore_patch_version_number'], false)
     this.useDummyLastchange = envConfig.getBoolean(
       ['use_dummy_lastchange'],
       true,

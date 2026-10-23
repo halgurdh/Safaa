@@ -5,7 +5,6 @@
 
 import type { Config } from './config.ts'
 import { isCI } from './ciDetect.ts'
-import assert from 'node:assert'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -107,11 +106,10 @@ export function getBuildArgs(config: Config) {
     }
   }
 
-  if (config.ignorePatchVersionNumber) {
-    assert(!config.isBraveReleaseBuild())
-
-    // Allow dummy LASTCHANGE to be set. When the real LASTCHANGE is used, ~2300
-    // targets are rebuilt with each version bump.
+  if (!config.isBraveReleaseBuild()) {
+    // Allow dummy LASTCHANGE to be set, also when the patch number is kept
+    // (see config.ts). When the real LASTCHANGE is used, ~2300 targets are
+    // rebuilt with each version bump.
     args.use_dummy_lastchange = config.useDummyLastchange
   }
 
