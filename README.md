@@ -16,7 +16,7 @@
 
 ---
 
-## System Requirements (Building for Android `arm64`)
+## System Requirements (Building for Android ARM)
 
 Building Chromium + Safaa for Android requires a Linux environment (Ubuntu 22.04 / 24.04 LTS, or **WSL2** on Windows):
 
@@ -72,11 +72,13 @@ pnpm run init --target_os=android --target_arch=arm64 --no-history
 
 ---
 
-## 2. Building the Android APK (`Safaa-arm64.apk`)
+## 2. Building the Android APKs
+
+Safaa provides separate installable APKs for 32-bit ARM (`arm`) and 64-bit ARM (`arm64`) devices. Install the APK matching your device. An Android App Bundle (`.aab`) is for Google Play and cannot be installed by tapping the file; use an APK for sideloading.
 
 ### Option A: Optimized Official Release Build (32 GB+ RAM)
 
-Builds the full official `Release` configuration (`is_official_build = true`, ThinLTO, R8/ProGuard optimization, `release` channel):
+Builds the full official `Release` configuration (`is_official_build = true`, ThinLTO, R8/ProGuard optimization, `release` channel). Run this once for each architecture (`arm` and `arm64`):
 
 ```bash
 source ~/Safaa/env.sh
@@ -96,14 +98,15 @@ pnpm run build Release \
   --ninja=j:"$JOBS"
 ```
 
-Output APK:
+Output APKs:
 ```text
+~/Safaa/src/out/android_Release_arm/apks/Safaa-arm.apk
 ~/Safaa/src/out/android_Release_arm64/apks/Safaa-arm64.apk
 ```
 
 ### Option B: Low-Memory `Static` Build (12–16 GB RAM)
 
-Builds an optimized APK without ThinLTO so linking fits comfortably in 12–16 GB RAM:
+Builds an optimized APK without ThinLTO so linking fits comfortably in 12–16 GB RAM. Run this once for each architecture (`arm` and `arm64`):
 
 ```bash
 source ~/Safaa/env.sh
@@ -127,6 +130,19 @@ Output APK:
 ```text
 ~/Safaa/src/out/android_Static_arm64/apks/Safaa-arm64.apk
 ```
+
+### Published Android releases
+
+The **Safaa Android Release** workflow publishes both ARM APKs to a GitHub release when manually run for an existing version tag. It requires a dedicated self-hosted Linux x64 runner with at least 120 GB of free disk space and these repository Actions secrets:
+
+- `SAFAA_ANDROID_KEYSTORE_BASE64`: Base64-encoded Safaa release keystore
+- `SAFAA_ANDROID_KEYSTORE_NAME`: Signing key alias
+- `SAFAA_ANDROID_KEYSTORE_PASSWORD`: Keystore password
+- `SAFAA_ANDROID_KEY_PASSWORD`: Signing key password
+
+The existing Safaa signing key is required for APKs to install as upgrades over existing Safaa installations. Do not replace it with a new key.
+
+For a tag such as `v1.100.5`, the tag must already exist and match the version in `package.json`. Select **Actions → Safaa Android Release → Run workflow** and enter the tag. The release contains `Safaa-arm.apk` and `Safaa-arm64.apk`.
 
 ---
 

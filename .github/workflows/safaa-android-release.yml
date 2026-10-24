@@ -1,0 +1,154 @@
+name: Safaa Android Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing version tag matching package.json (for example, v1.100.5)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }} APK
+    runs-on: [self-hosted, linux, x64, safaa-android]
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm, arm64]
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag }}
+          path: src/brave
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.16.0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.11.0
+
+      - name: Check release tag
+        working-directory: src/brave
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          test "$RELEASE_TAG" = "v$version"
+          git rev-parse "$RELEASE_TAG^{commit}" >/dev/null
+
+      - name: Install dependencies and fetch Android sources
+        working-directory: src/brave
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run init --target_os=android --target_arch=${{ matrix.arch }} --no-history
+
+      - name: Configure Android signing
+        working-directory: src/brave
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SAFAA_ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_NAME: ${{ secrets.SAFAA_ANDROID_KEYSTORE_NAME }}
+          KEYSTORE_PASSWORD: ${{ secrets.SAFAA_ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.SAFAA_ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64"
+          test -n "$KEYSTORE_NAME"
+          test -n "$KEYSTORE_PASSWORD"
+          test -n "$KEY_PASSWORD"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/safaa-release.keystore"
+          chmod 600 "$RUNNER_TEMP/safaa-release.keystore"
+          node --input-type=module -e '
+            import { writeFileSync } from "node:fs";
+            const values = {
+              is_brave_release_build: "1",
+              brave_android_keystore_path: process.env.RUNNER_TEMP + "/safaa-release.keystore",
+              brave_android_keystore_name: process.env.KEYSTORE_NAME,
+              brave_android_keystore_password: process.env.KEYSTORE_PASSWORD,
+              brave_android_key_password: process.env.KEY_PASSWORD,
+            };
+            writeFileSync(".env", Object.entries(values)
+              .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
+              .join("\n") + "\n", { mode: 0o600 });
+          '
+
+      - name: Build signed release APK
+        working-directory: src/brave
+        run: |
+          jobs="$(nproc)"
+          export SISO_LIMITS="local=$jobs"
+          export JAVA_OPTS="-Xmx16G -Xms4G"
+          export NODE_OPTIONS="--max-old-space-size=16384"
+          pnpm run build Release \
+            --channel=release \
+            --target_os=android \
+            --target_arch=${{ matrix.arch }} \
+            --target_android_output_format=apk \
+            --gn=symbol_level:0 \
+            --ninja=j:"$jobs"
+
+      - name: Verify and stage signed APK
+        working-directory: src/brave
+        env:
+          ANDROID_ARCH: ${{ matrix.arch }}
+        run: |
+          apk="out/android_Release_${ANDROID_ARCH}/apks/Safaa-${ANDROID_ARCH}.apk"
+          test -s "$apk"
+          apksigner="$(find ../third_party/android_sdk/public/build-tools -name apksigner -type f -print -quit)"
+          test -n "$apksigner"
+          "$apksigner" verify "$apk"
+          mkdir -p "$RUNNER_TEMP/safaa-release-artifacts"
+          cp "$apk" "$RUNNER_TEMP/safaa-release-artifacts/"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: safaa-android-${{ matrix.arch }}
+          path: ${{ runner.temp }}/safaa-release-artifacts/Safaa-${{ matrix.arch }}.apk
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Remove signing material
+        if: always()
+        working-directory: src/brave
+        run: |
+          rm -f .env "$RUNNER_TEMP/safaa-release.keystore"
+
+  publish:
+    name: Publish Android release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Download APKs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: safaa-android-*
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          test -s release-artifacts/Safaa-arm.apk
+          test -s release-artifacts/Safaa-arm64.apk
+          gh release create "$RELEASE_TAG" \
+            release-artifacts/Safaa-arm.apk \
+            release-artifacts/Safaa-arm64.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$RELEASE_TAG" \
+            --generate-notes \
+            --verify-tag
